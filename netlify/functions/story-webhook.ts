@@ -29,9 +29,9 @@ interface StoryWebhookPayload {
       title: string;
       description: string;
       thumbnailUrl: string;
-      imageUrls: string[];
+      imageURLs: string[];
       storyTexts: string[];
-      narrationUrls: string[];
+      narrationURLs: string[];
       numberOfPages: 12 | 24;
       tags: string[];
     };
@@ -75,32 +75,25 @@ export const handler: Handler = async (event) => {
 
     const existingData = snapshot.val();
     
-    // Güncellenecek veriyi hazırla ve undefined kontrolü yap
+    // Güncellenecek veriyi hazırla
     const updateData = {
       ...existingData,
       status: 'completed',
-      title: payload.data.bookDetails?.title || existingData.title || `${payload.data.childName}'in Masalı`,
-      description: payload.data.bookDetails?.description || existingData.description || 'Kişiye özel oluşturulmuş masal',
-      thumbnailUrl: payload.data.bookDetails?.thumbnailUrl || existingData.thumbnailUrl || payload.data.transformedPhotoUrl,
-      imageUrls: payload.data.bookDetails?.imageUrls || existingData.imageUrls || [],
-      storyTexts: payload.data.bookDetails?.storyTexts || existingData.storyTexts || [],
-      narrationUrls: payload.data.bookDetails?.narrationUrls || existingData.narrationUrls || [],
-      numberOfPages: payload.data.bookDetails?.numberOfPages || existingData.numberOfPages || 12,
-      tags: payload.data.bookDetails?.tags || existingData.tags || [
-        'Kişiye Özel Masal',
-        payload.data.childGender === 'male' ? 'Erkek' : 'Kız',
-        `${payload.data.childAge} Yaş`
-      ],
+      title: payload.data.bookDetails.title,
+      description: payload.data.bookDetails.description,
+      thumbnailUrl: payload.data.bookDetails.thumbnailUrl,
+      imageURLs: payload.data.bookDetails.imageURLs,
+      storyTexts: payload.data.bookDetails.storyTexts,
+      narrationURLs: payload.data.bookDetails.narrationURLs,
+      numberOfPages: payload.data.bookDetails.numberOfPages,
+      tags: payload.data.bookDetails.tags,
       updatedAt: new Date().toISOString()
     };
 
-    // Undefined değerleri filtrele
-    const cleanUpdateData = Object.fromEntries(
-      Object.entries(updateData).filter(([_, value]) => value !== undefined)
-    );
+    console.log('Updating story with data:', updateData);
 
     // Veriyi güncelle
-    await storyRef.update(cleanUpdateData);
+    await storyRef.update(updateData);
 
     return {
       statusCode: 200,
