@@ -32,8 +32,8 @@ interface StoryWebhookPayload {
       imageUrls: string[];
       storyTexts: string[];
       narrationUrls: string[];
-      numberOfPages: 12 | 24; // Eklendi
-      tags: string[]; // Eklendi
+      numberOfPages: 12 | 24;
+      tags: string[];
     };
   };
 }
@@ -59,6 +59,11 @@ export const handler: Handler = async (event) => {
     const payload = JSON.parse(event.body || '{}') as StoryWebhookPayload;
     console.log('Received payload:', payload);
 
+    // Gerekli alanları kontrol et
+    if (!payload.data?.storyId || !payload.data?.userId) {
+      throw new Error('Missing required fields: storyId or userId');
+    }
+
     // Hikaye kaydını güncelle
     const storyRef = database.ref(`userStories/${payload.data.userId}/${payload.data.storyId}`);
     
@@ -70,20 +75,32 @@ export const handler: Handler = async (event) => {
 
     const existingData = snapshot.val();
     
-    // Veriyi güncelle
-    await storyRef.update({
+    // Güncellenecek veriyi hazırla ve undefined kontrolü yap
+    const updateData = {
       ...existingData,
       status: 'completed',
-      title: payload.data.bookDetails.title,
-      description: payload.data.bookDetails.description,
-      thumbnailUrl: payload.data.bookDetails.thumbnailUrl,
-      imageUrls: payload.data.bookDetails.imageUrls,
-      storyTexts: payload.data.bookDetails.storyTexts,
-      narrationUrls: payload.data.bookDetails.narrationUrls,
-      numberOfPages: payload.data.bookDetails.numberOfPages, // Eklendi
-      tags: payload.data.bookDetails.tags, // Eklendi
+      title: payload.data.bookDetails?.title || existingData.title || `${payload.data.childName}'in Masalı`,
+      description: payload.data.bookDetails?.description || existingData.description || 'Kişiye özel oluşturulmuş masal',
+      thumbnailUrl: payload.data.bookDetails?.thumbnailUrl || existingData.thumbnailUrl || payload.data.transformedPhotoUrl,
+      imageUrls: payload.data.bookDetails?.imageUrls || existingData.imageUrls || [],
+      storyTexts: payload.data.bookDetails?.storyTexts || existingData.storyTexts || [],
+      narrationUrls: payload.data.bookDetails?.narrationUrls || existingData.narrationUrls || [],
+      numberOfPages: payload.data.bookDetails?.numberOfPages || existingData.numberOfPages || 12,
+      tags: payload.data.bookDetails?.tags || existingData.tags || [
+        'Kişiye Özel Masal',
+        payload.data.childGender === 'male' ? 'Erkek' : 'Kız',
+        `${payload.data.childAge} Yaş`
+      ],
       updatedAt: new Date().toISOString()
-    });
+    };
+
+    // Undefined değerleri filtrele
+    const cleanUpdateData = Object.fromEntries(
+      Object.entries(updateData).filter(([_, value]) => value !== undefined)
+    );
+
+    // Veriyi güncelle
+    await storyRef.update(cleanUpdateData);
 
     return {
       statusCode: 200,
