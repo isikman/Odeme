@@ -32,6 +32,8 @@ interface StoryWebhookPayload {
       imageUrls: string[];
       storyTexts: string[];
       narrationUrls: string[];
+      numberOfPages: 12 | 24; // Eklendi
+      tags: string[]; // Eklendi
     };
   };
 }
@@ -59,9 +61,27 @@ export const handler: Handler = async (event) => {
 
     // Hikaye kaydını güncelle
     const storyRef = database.ref(`userStories/${payload.data.userId}/${payload.data.storyId}`);
+    
+    // Mevcut veriyi al
+    const snapshot = await storyRef.get();
+    if (!snapshot.exists()) {
+      throw new Error('Story not found');
+    }
+
+    const existingData = snapshot.val();
+    
+    // Veriyi güncelle
     await storyRef.update({
+      ...existingData,
       status: 'completed',
-      ...payload.data.bookDetails,
+      title: payload.data.bookDetails.title,
+      description: payload.data.bookDetails.description,
+      thumbnailUrl: payload.data.bookDetails.thumbnailUrl,
+      imageUrls: payload.data.bookDetails.imageUrls,
+      storyTexts: payload.data.bookDetails.storyTexts,
+      narrationUrls: payload.data.bookDetails.narrationUrls,
+      numberOfPages: payload.data.bookDetails.numberOfPages, // Eklendi
+      tags: payload.data.bookDetails.tags, // Eklendi
       updatedAt: new Date().toISOString()
     });
 

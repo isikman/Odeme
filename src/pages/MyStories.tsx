@@ -185,18 +185,19 @@ export default function MyStories() {
         <StoryReader
           story={{
             id: currentStory.id,
-            title: `${currentStory.childName}'in Masalı`,
-            description: currentStory.description || '',
-            bookNumber: 1,
+            title: currentStory.title || `${currentStory.childName}'in Masalı`,
+            description: currentStory.description || 'Kişiye özel oluşturulmuş masal',
+            bookNumber: parseInt(currentStory.id.split('_')[2]) || 1,
             thumbnailURL: currentStory.thumbnailUrl || currentStory.transformedPhotoUrl,
             originalPhotoURL: currentStory.transformedPhotoUrl,
-            numberOfPages: 12,
-            tags: [],
+            numberOfPages: currentStory.numberOfPages || 12,
+            tags: currentStory.tags || ['Kişisel Masal', currentStory.childGender === 'male' ? 'Erkek' : 'Kız', `${currentStory.childAge} Yaş`],
             imageURLs: currentStory.imageUrls || [],
             storyTexts: currentStory.storyTexts || [],
             narrationURLs: currentStory.narrationUrls || [],
             createdAt: currentStory.createdAt,
-            updatedAt: currentStory.updatedAt
+            updatedAt: currentStory.updatedAt,
+            userId: currentStory.userId
           }}
           onClose={() => setSelectedStory(null)}
         />
